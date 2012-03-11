@@ -1,0 +1,73 @@
+#!/usr/bin/perl
+
+# License: NO WARRANTY - use it as you want 
+
+use LWP::Simple;
+use strict;
+
+&main;
+
+my $curphoto;
+my $curphototype;
+my $curemail;
+my $curfn;
+
+sub startnewcard {
+  undef $curphoto;
+  undef $curphototype;
+  undef $curemail;
+  undef $curfn;
+}
+
+sub endcard {
+ if (! defined $curphototype) { $curphototype= 'jpg'; }
+ $curphototype=~ s/JPEG/jpg/;
+ if (defined $curemail) {
+   if (defined $curphoto) {
+     print "mail: $curemail\n photo: $curphoto\n";
+     &fetchphoto("$curemail.$curphototype");
+   } else {
+     print STDERR "INFO: Kein Foto für $curfn ($curemail)\n";
+   }
+ } else {
+   print STDERR "INFO: Keine E-Mail Adresse für $curfn gefunden\n";
+   if (defined $curphoto) {
+     my $filename= $curfn;
+     $filename=~ s/ /_/g;
+     &fetchphoto("noemail.$filename.jpg");
+   }
+ }
+}
+
+sub fetchphoto {
+  my ($filename)= @_;
+  my $content= get $curphoto;
+  if (defined $content) {
+    open(OUT, ">$filename") || die "could not open $filename\n";
+    print OUT $content || die "could not write $filename\n";
+    close(OUT)  || die "could not close $filename\n";
+  } else {
+    die "could not fetch $curphoto\n";
+  }
+}
+
+
+sub main {
+  while (<STDIN>) { 
+    chomp;
+    s/\n//;
+    s/\r//;
+    if (/^BEGIN:VCARD/) { &startnewcard }
+    if (/^END:VCARD/) { &endcard }
+    if (/^FN;.*:(.*)$/) {
+      $curfn= $1;
+    }
+    if (/^EMAIL;.*type=pref:(.*)$/) {
+      $curemail= $1;
+    }
+    if (/^PHOTO;.*;TYPE=([A-Z]+):(http.*)$/) {
+      $curphototype= $1;
+      $curphoto= $2;
+    }
+  }
+}

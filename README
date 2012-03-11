@@ -1,0 +1,12 @@
+Prerequisites: perl and LWP::Simple
+
+Usage: fetchvcardphoto <vcardfile
+
+Writes each photo in a file. The fielname is the prefered email-Adress or - if not set - the full name.
+
+If you use another charset then the vcardfile, you have to convert it, e.g.
+
+iconv -f latin1 -t utf8 < vcardfile | fetchvcardphoto
+
+
+Use it at you own risk. 
